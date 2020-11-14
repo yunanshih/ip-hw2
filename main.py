@@ -20,17 +20,26 @@ sobelY = np.array([
     [1, 2, 1]
 ])
 
+def getLoG(size, sigma):
+    LOG = np.zeros([size, size])
+    r = size // 2
+    for i in range(-r, r+1):
+        for j in range(-r, r+1):
+            d1 = 2 * np.pi * (sigma ** 2)
+            d2 = np.exp(-(i ** 2 + j ** 2) / (2 * sigma ** 2))
+            d3 = (i ** 2 + j ** 2 - (2 * sigma ** 2)) / (sigma ** 4)
+            LOG[i+r][j+r] = d2 * d3 / d1
+    return LOG
 
 def getGaussian(size):
-    gaussian = np.zeros([5, 5])
+    gaussian = np.zeros([size, size])
     sigma = 1
     r = size // 2
-
     for i in range(-r, r+1):
         for j in range(-r, r+1):
             d1 = 2 * np.pi * (sigma**2)
-            d2 = np.exp(-(i**2 + j**2) / (2* sigma**2))
-            gaussian[i + r, j + r] = (1 / d1) * d2
+            d2 = np.exp(-(i ** 2 + j ** 2) / (2 * sigma ** 2))
+            gaussian[i+r, j+r] =  d2 / d1
     return gaussian
 
 def getGradient(X, Y):
@@ -38,13 +47,11 @@ def getGradient(X, Y):
     width = X.shape[1]
     magnitude = np.zeros([height, width])
     degree = np.zeros([height, width])
-
     for i in range(height):
         for j in range(width):
             magnitude[i][j] = np.sqrt(np.square(X[i, j]) + np.square(Y[i, j]))
             degree[i][j] = np.arctan(Y[i][j] / X[i][j])
-    direction = np.arctan2(Y, X)
-    return magnitude, degree, direction
+    return magnitude, degree
     
 def nonMaximalSupress(image, degree):
     height = image.shape[0]
@@ -104,17 +111,26 @@ def convolution2d(image, filter):
                 newImage[i][j] = np.sum(image[i-border : i+row-border, j-border : j+row-border] * filter)
     return newImage
 
+def applyLOG(image, size, sigma):
+    LOG = getLoG(size, sigma)
+    print(LOG)
+    return convolution2d(image, LOG)
+
 def canny(image, lt, ht):
     gaussian = getGaussian(3)
     blurred = convolution2d(image, gaussian)
     X = convolution2d(blurred, sobelX)
     Y = convolution2d(blurred, sobelY)
-    magnitude, degree, direction = getGradient(X, Y)
+    magnitude, degree = getGradient(X, Y) #, direction = getGradient(X, Y)
     NMS = nonMaximalSupress(magnitude, degree)
     result = doubleThreshold(NMS, lt, ht)
     return result
 
-p1 = canny(p1im6, 20, 80)
+# p1 = canny(p1im6, 20, 80)
+# cv2.imshow('1', p1)
+# cv2.waitKey(0)
+
+p1 = applyLOG(p1im6, 5, 1)
 cv2.imshow('1', p1)
 cv2.waitKey(0)
 
