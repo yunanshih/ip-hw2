@@ -1,11 +1,7 @@
 import cv2
 import numpy as np
 
-p1im1 = cv2.imread('./images/p1im1.png', cv2.IMREAD_COLOR)
-p1im2 = cv2.imread('./images/p1im2.png', cv2.IMREAD_COLOR)
-p1im3 = cv2.imread('./images/p1im3.png', cv2.IMREAD_COLOR)
-p1im4 = cv2.imread('./images/p1im4.png', cv2.IMREAD_COLOR)
-p1im5 = cv2.imread('./images/p1im5.png', cv2.IMREAD_COLOR)
+p1im4 = cv2.imread('./images/p1im4.png', cv2.IMREAD_GRAYSCALE)
 p1im6 = cv2.imread('./images/p1im6.png', cv2.IMREAD_GRAYSCALE)
 
 sobelX = np.array([
@@ -90,8 +86,8 @@ def doubleThreshold(NMS, lt, ht):
             elif NMS[i][j] < lt:
                 t[i][j] = 0
     result = np.zeros([height, width])
-    for i in range(height):
-        for j in range(width):
+    for i in range(height - 1):
+        for j in range(width - 1):
             if t[i][j] == 75:
                 if t[i+1][j] == 255 or t[i-1][j] == 255 or t[i][j+1] == 255 or t[i][j-1] == 255 or t[i+1][j+1] == 255 or t[i-1][j-1] == 255:
                     result[i][j] = 255
@@ -113,52 +109,32 @@ def convolution2d(image, filter):
 
 def applyLOG(image, size, sigma):
     LOG = getLoG(size, sigma)
-    print(LOG)
     return convolution2d(image, LOG)
+
+def applyLOGPre(image, size, sigma):
+    gaussian = getGaussian(3)
+    blurred = convolution2d(image, gaussian)
+    LOG = getLoG(size, sigma)
+    return convolution2d(blurred, LOG)
 
 def canny(image, lt, ht):
     gaussian = getGaussian(3)
     blurred = convolution2d(image, gaussian)
     X = convolution2d(blurred, sobelX)
     Y = convolution2d(blurred, sobelY)
-    magnitude, degree = getGradient(X, Y) #, direction = getGradient(X, Y)
+    magnitude, degree = getGradient(X, Y)
     NMS = nonMaximalSupress(magnitude, degree)
     result = doubleThreshold(NMS, lt, ht)
     return result
 
-# p1 = canny(p1im6, 20, 80)
-# cv2.imshow('1', p1)
-# cv2.waitKey(0)
-
-p1 = applyLOG(p1im6, 5, 1)
+p1 = applyLOG(p1im4, 5, 0.7)
 cv2.imshow('1', p1)
 cv2.waitKey(0)
 
-# p1im1_result = 
-# cv2.imshow('1', p1im1_result)
-# cv2.waitKey(0)
+p1 = applyLOGPre(p1im4, 5, 0.7)
+cv2.imshow('2', p1)
+cv2.waitKey(0)
 
-# p1im2_result = 
-# cv2.imshow('2', p1im2_result)
-# cv2.waitKey(0)
-
-# p1im3_result = 
-# p1im3_result = gammaCorrection(p1im3_result, 2.4)
-# cv2.imshow('3', p1im3_result)
-# cv2.waitKey(0)
-
-# p1im4_result = 
-# cv2.imshow('4', p1im4_result)
-# cv2.waitKey(0)
-
-# p1im5_result = 
-# cv2.imshow('5', p1im5_result)
-# cv2.waitKey(0)
-
-# p1im5_result = 
-# cv2.imshow('5', p1im5_result)
-# cv2.waitKey(0)
-
-# p1im6_result = 
-# cv2.imshow('6', p1im6_result)
-# cv2.waitKey(0)
+p2 = canny(p1im4, -20, 10)
+cv2.imshow('3', p2)
+cv2.waitKey(0)
